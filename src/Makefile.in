@@ -248,7 +248,7 @@ top_srcdir = @top_srcdir@
 @DEBUG_TRUE@OPTIMIZATIONS = -ggdb -DDEBUG
 AM_CFLAGS = -W -Wformat -Wimplicit -Wreturn-type -Wall -Werror \
             -Wunused-variable -Wunused-parameter -Wreturn-type -Wswitch \
-            -Wcast-align -Winline -Wnested-externs -Wextra $(OPTIMIZATIONS) \
+            -Winline -Wnested-externs -Wextra $(OPTIMIZATIONS) \
             -std=c99
 
 

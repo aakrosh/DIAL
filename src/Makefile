@@ -248,7 +248,7 @@ OPTIMIZATIONS = -DNDEBUG -O2 -funroll-all-loops $(ARCH)
 #OPTIMIZATIONS = -ggdb -DDEBUG
 AM_CFLAGS = -W -Wformat -Wimplicit -Wreturn-type -Wall -Werror \
             -Wunused-variable -Wunused-parameter -Wreturn-type -Wswitch \
-            -Wcast-align -Winline -Wnested-externs -Wextra $(OPTIMIZATIONS) \
+            -Winline -Wnested-externs -Wextra $(OPTIMIZATIONS) \
             -std=c99
 
 
