@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+
+"""
+ Simple module which helps me keep the status.txt file in a project updated 
+"""
+from sys import argv, stderr, exit
+from getopt import getopt, GetoptError
+
+__author__ = "Aakrosh Ratan"
+__email__  = "ratan@bx.psu.edu"
+
+# do we print the debug information
+debug_flag = False
+
+# do we remove this run from the project
+remove_run = False
+
+def calculateBases(file):
+    bases = 0
+    file = open(file, "r")
+    for line in file:
+        if line[0] == ">":
+            continue
+        bases = bases + len(line.rstrip())
+    file.close()
+    return bases
+
+def main(statusfile, addedfile, usedfile, name):
+    file = open(statusfile, "r")
+    runs = -1
+
+    if remove_run == False:
+        for line in file:
+            tokens = line.split()
+            if tokens[0] == "Expected" or \
+               tokens[0] == "Dataset"  or \
+               tokens[0] == "454"      or \
+               tokens[0] == "Velvet":
+                print line,
+            elif tokens[0] == "Bases":
+                if tokens[1] == "used:":
+                    assert(runs != -1)
+                    if runs == 1:
+                        bases = 0 
+                    else:
+                        bases = calculateBases(usedfile)
+                    print "Bases used: %d" % (int(tokens[2]) + bases)
+                elif tokens[1] == "added:":
+                    assert(runs != -1)
+                    if runs == 1:
+                        bases = 0 
+                    else:
+                        bases = calculateBases(addedfile)
+                    print "Bases added: %d" % (int(tokens[2]) + bases)
+            elif tokens[0] == "Runs":
+                print "Runs added: %d" % (int(tokens[2]) + 1)
+                runs = int(tokens[2]) + 1
+            else:
+                print line,
+        print "%s\t%s" % (usedfile, name)
+    else:
+        for line in file:
+            tokens = line.split()
+            if tokens[0] == "Expected" or \
+               tokens[0] == "Dataset"  or \
+               tokens[0] == "454"      or \
+               tokens[0] == "Velvet":
+                print line,
+            elif tokens[0] == "Bases":
+                if tokens[1] == "used:":
+                    bases = calculateBases(usedfile)
+                    print "Bases used: %d" % (int(tokens[2]) - bases)
+                elif tokens[1] == "added:":
+                    bases = calculateBases(addedfile)
+                    print "Bases added: %d" % (int(tokens[2]) - bases)
+            elif tokens[0] == "Runs":
+                print "Runs added: %d" % (int(tokens[2]) - 1)
+            elif tokens[0] == usedfile:
+                continue
+            else:
+                print line,
+    file.close()
+
+def usage():
+    f = stderr
+    print >> f, "usage:"
+    print >> f, " [options] "
+    print >> f, "where the options are:"
+    print >> f, "-h,--help : print usage and quit"
+    print >> f, "-d,--debug: print debug information"
+    print >> f, "-r,--remove: remove this run from the project"
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt(argv[1:], "hdr",["help", "debug", "remove"])
+    except GetoptError, err:
+        print str(err)
+        usage()
+        exit(2) 
+
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            usage()
+            exit()
+        elif o in ("-d", "--debug"):
+            debug_flag = True
+        elif o in ("-r", "--remove"):
+            remove_run = True
+        else:
+            assert False, "unhandled option"
+
+    if len(args) != 4:
+        usage()
+        exit(3)
+
+    main(args[0], args[1], args[2], args[3])

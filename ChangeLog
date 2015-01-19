@@ -1,0 +1,9 @@
+2010-02-11  Aakrosh Ratan <ratan@bx.psu.edu>
+
+    * assemble.c : Added support for lr800 reads from Roche.
+    * sff.c      : Changed the code to support the lr800 reads, and the
+                   corresponding SFF format
+
+2010-03-01  Aakrosh Ratan <ratan@bx.psu.edu>
+    *configure.ac : Now checks for "lastz" in the path before creating Makefiles
+                    for DIAL

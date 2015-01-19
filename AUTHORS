@@ -1,0 +1,13 @@
+Most of the code in this package is written by Aakrosh Ratan (ratan@bx.psu.edu).
+
+The code to create an index of the reads in several SFF files is written by Bob
+Harris (bob@bx.psu.edu). Bob Harris is also the author of LASTZ, the aligner
+used by DIAL to align the sequences to each other.
+
+The "filter" module is written by Webb Miller (webb@bx.psu.edu). The module
+imposes restrictions on the called SNPs, selecting a high confidence subset
+suitable for use in genotyping assays.
+
+"SuperFastHash" is created by Paul Hsieh and is the default hashing function in
+the various modules. The details of the hash function can be found at
+http://www.azillionmonkeys.com/qed/hash.html.

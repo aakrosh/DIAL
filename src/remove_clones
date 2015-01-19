@@ -1,0 +1,72 @@
+#! /usr/bin/env python
+
+"""
+    Simple module to keep only one copy of the reads which might have come from
+    the same bead. We just hash the sequence of the reads and then check every
+    sequence to find if a clone is found. We simply ignore it if it is found
+"""
+
+import sys
+
+try:
+    import hashlib
+    md5construct = hashlib.md5
+except ImportError:
+    import md5
+    md5construct = md5.new
+
+dictionary={}
+
+def processMotif(fullheader, motifs):
+    sequence = "".join(motifs)
+    header = (fullheader.split())[0]
+
+    key = md5construct(sequence).hexdigest()
+    if key not in dictionary:
+        print "%s\n%s" % (header, sequence)
+        dictionary[key] = sequence
+        return True
+    else:
+        if dictionary[key] != sequence:
+            print "%s\n%s" % (header, sequence)
+            return True
+    return False
+
+def main():
+    motifs = []
+    total = 0
+    passed = 0
+    
+    for line in sys.stdin:
+        #new read?
+        if line[0] == ">":
+            if len(motifs) != 0:
+                total = total + 1
+                if processMotif(header, motifs) == True:
+                    passed = passed + 1
+            header = line
+            motifs = []
+        elif line[0] == "\n":
+            continue
+        else:
+            motifs.append(line.rstrip())
+
+    #the last sequence
+    if len(motifs) != 0:
+        total = total + 1
+        if processMotif(header, motifs) == True:
+            passed = passed + 1
+
+    #lets print out the stats
+    try:
+        percent = passed*100.0/total
+        sys.stderr.write("%d/%d (%3.2f%%) informative reads in this set\n" % \
+                    (passed, total, passed*100.0/total))
+    except ZeroDivisionError:
+        sys.stderr.write("No reads in the input file to remove_clones\n")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 1:
+        sys.stderr.write("remove_clones: Incorrect number of arguments\n")
+        exit(1)
+    main()

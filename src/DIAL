@@ -1,0 +1,372 @@
+#!/usr/bin/env bash
+
+set -e
+set -u 
+
+#set the value of some variables
+E_BADARGS=65
+E_BADPROFILE=35
+
+print_use_exit()
+{
+    create="create project_name 454/illumina"
+    add="add project_name sff_file/lane_sequence name_individual [-transcript]"
+    update="update project_name"
+
+    echo "Usage:"
+    echo " DIAL ${create}"
+    echo " DIAL ${add}"
+    echo " DIAL ${update}"
+    exit ${E_BADARGS}
+}
+
+## All DIAL commands begin with 
+#   DAIL ${action} ${arguments}
+##
+if [ $# -lt 1 ]; then
+    print_use_exit
+fi
+
+## DIAL should be supplied with the name of the project. The format is
+#   DIAL create project_name
+#  DIAL creates a project_name folder in a particular format. Then the file
+#  status.txt in the project_name folder should be edited for this project.
+# If the command is 
+#   DIAL add project_name sff_file/lane_sequence name_individual [-transcript]
+# then action depends on whether this is a 454 dataset or an illumina dataset.
+##
+if [ "$1" == "create" ]; then
+    if [ $# -lt 3 ]; then
+        print_use_exit
+    fi
+
+    if [ "$3" != "454" ] && [ "$3" != "illumina" ]; then
+        print_use_exit
+    fi
+
+    #create the directory structure
+    mkdir -p $2
+    mkdir $2/reads
+    mkdir $2/clusters
+    mkdir $2/alleles
+    
+    #an extra directory if this is a 454 dataset
+    if [ "$3" == "454" ]; then
+        mkdir $2/sff
+    fi
+
+    #create the project file
+    echo "Dataset: $3" > $2/status.txt
+    if [ "$3" == "454" ]; then
+        echo "454 Binaries: /usr/local/rig/bin" >> $2/status.txt
+    else
+        echo "Velvet binaries: ~/bin/x86_64" >> $2/status.txt
+    fi
+    echo "Expected size of the genome: 3000000000" >> $2/status.txt
+    echo "Runs added: 0" >> $2/status.txt
+    echo "Bases added: 0" >> $2/status.txt
+    echo "Bases used: 0" >> $2/status.txt
+    
+    #prompt used that this is done successfully
+    echo "Project $2 created successfully"
+
+elif [ "$1" == "add" ]; then
+    if [ $# -lt 4 ]; then
+        print_use_exit
+    fi
+        
+    current=$(pwd)
+
+    tech=$(cat $2/status.txt | awk 'NR==1{print $2}')
+    if [ "${tech}" == "454" ]; then
+        name=$(basename $3)
+        prefix=${name%%".sff"}
+        
+        #where are the sffinfo, newbler... binaries?
+        sffpath=$(cat $2/status.txt | awk 'NR==2{print $3}')
+        
+        #add a softlink to the sff file
+        ln -s $3 $2/sff/${name}
+
+        #read the sequence from the sff file and remove the uninformative reads
+        cd $2
+        ${sffpath}/sffinfo -s $3 | \
+        remove_clones > fake.fa
+        ${sffpath}/sffinfo -q $3 > fake.qual
+
+        #lastz scores and filters for the 454 reads 
+        lzscore="--match=1,3 --gap=1,3 --ambiguousn Y=10"
+        lzfilter="--identity=96..100 --format=maf"
+
+        #repeat mask the kmers that are over-represented using the windowmasked
+        #algorithm, then update the reads where you throw away the reads if the
+        #length of the unmasked read is less than 100 bp. No repeat masking
+        #if this is a transcript dataset
+        if [ $# -eq 4 ]; then
+            masker fake.fa | \
+            update /dev/stdin fake.qual \
+            --minlen=100 --prefix=${prefix} --repeats=alleles/repeats.fa
+            
+            update_status status.txt fake.fa ${prefix}.fa $4 > fake && \
+            mv fake status.txt
+            rm fake.fa fake.qual
+            
+            #lastz seeds
+            lzseed="W=13 Z=26 --exact=40"
+            tr=""
+
+        elif [ $# -eq 5 ] && [ "$5" == "-transcript" ]; then
+            cp fake.fa ${prefix}.fa
+            update_status status.txt fake.fa ${prefix}.fa $4 > fake && \
+            mv fake status.txt
+        
+            mv fake.fa ${prefix}.fa
+            mv fake.qual ${prefix}.qual
+
+            #there is no repeat filtering if this is a transcript dataset,
+            #but we add --maxwordcount to speed up the alignments
+            lzseed="W=13 Z=26 --exact=40 --maxwordcount=90%"
+            tr="$5"
+        else
+            print_use_exit
+        fi
+    
+        #now align this set with all the existing sets modifying the clusters in
+        #the process
+        runs=$(find reads -name "*.fa")
+        make_template ${prefix}.fa $4 > ${prefix}.clt
+        for run in ${runs}; do
+            runname=$(basename ${run})
+            runprefix=${runname%%".fa"}
+
+            #details required for calculating maxhits and names of individuals
+            genome=$(cat status.txt | awk 'NR==3{print $6}')
+            bases=$(cat status.txt | awk 'NR==5{print $3}')
+            name1=$4
+            name2=$(cat status.txt | grep "^${runprefix}" | awk '{print $2}')
+
+            #align and update the clusters
+            lastz ${prefix}.fa[multi] reads/${runprefix}.fa \
+            ${lzseed} ${lzscore} ${lzfilter} |\
+            update_clusters ${prefix}.clt ${prefix}.fa ${name1}\
+            clusters/${runprefix}.clt reads/${runprefix}.fa ${name2}\
+            --minlen=100 --numbases=${bases} --expsize=${genome} ${tr} > fake
+
+            #replace the older copies with the updated ones
+            partition fake clusters/${runprefix}.clt ${prefix}.clt
+            rm fake
+            echo "Aligned ${prefix}.fa with ${runprefix}.fa"
+        done
+
+        #move the fasta files for the current run to the running set
+        mv ${prefix}.fa ${prefix}.qual reads
+        mv ${prefix}.clt clusters
+        cd ${current}
+
+    elif [ "${tech}" == "illumina" ]; then
+        #convert the fastq files into fasta base and quality values
+        cd $2
+        ln -s $3 lane.fastq
+        convertFastqFasta lane.fastq
+
+        #read the sequences and remove the uninformative reads
+        remove_clones < lane.fa > fake.fa
+
+        #store the file in a tmp location
+        mkdir tmp
+        name=$(head -n 1 fake.fa | awk '{split($1,a,":"); printf "%s.", substr(a[1],2); for(i = 2; i < length(a); i++) printf "%s.", a[i]; printf "%s", a[i]}')
+        mv fake.fa tmp/${name}.fa
+        mv lane.qual tmp/${name}.qual
+        rm lane.fastq lane.fa
+
+        #lastz score and filters        
+        lzseed="W=13 Z=11 --nolaj --maxwordcount=90%"
+        lzscore="--match=1,10 --gap=10,10 --ambiguousn Y=20"
+        lzfilter="--noytrim --format=maf --identity=96..100"
+
+        files=$(ls tmp/*.fa)
+        for file in ${files}; do
+            name=$(basename ${file})
+            prefix=${name%%".fa"}
+
+            cp tmp/${prefix}.fa ${prefix}.fa
+            cp tmp/${prefix}.qual ${prefix}.qual
+            update_status status.txt ${file} ${prefix}.fa $4 > fake && \
+            mv fake status.txt
+
+            runs=$(find reads -name "*.fa")
+            make_template ${prefix}.fa $4 > ${prefix}.clt
+            
+            for run in ${runs}; do
+                runname=$(basename ${run})
+                runprefix=${runname%%".fa"}
+
+                #details required for calculating maxhits and names
+                genome=$(cat status.txt | awk 'NR==3{print $6}')
+                bases=$(cat status.txt | awk 'NR==5{print $3}')
+                name1=$4
+                name2=$(cat status.txt \
+                        | grep ${runprefix}[^0-9] \
+                        | awk '{print $2}')
+
+                lastz ${prefix}.fa[multi,nameparse=full] \
+                reads/${runprefix}.fa[nameparse=full] \
+                ${lzseed} ${lzscore} ${lzfilter} | \
+                update_clusters ${prefix}.clt ${prefix}.fa ${name1}\
+                clusters/${runprefix}.clt reads/${runprefix}.fa ${name2}\
+                --minlen=50 --numbases=${bases} --expsize=${genome} > fake
+
+                #replace the older copies with the updated ones
+                partition fake clusters/${runprefix}.clt ${prefix}.clt
+                rm fake
+            done
+
+            #move the fasta files for the current run to the running set
+            mv ${prefix}.fa ${prefix}.qual reads
+            mv ${prefix}.clt clusters
+        done
+            
+        rm -rf tmp
+        cd ${current}
+
+    else
+        echo "Please check $2/status.txt."
+        echo "Acceptable values of "Dataset:" are 454/illumina"
+        exit ${E_BADPROFILE} 
+    fi
+    
+elif [ "$1" == "update" ]; then
+    if [ $# -lt 2 ]; then
+        print_use_exit
+    fi
+        
+    current=$(pwd)
+
+    tech=$(cat $2/status.txt | awk 'NR==1{print $2}')
+    sffpath=$(cat $2/status.txt | awk 'NR==2{print $3}')
+    
+    cd $2
+    files=$(find clusters -name "*.clt")
+    names=$(awk 'NR > 6 {print $2}' status.txt | \
+            sort | uniq | awk '{printf "%s,", $1}')
+    
+    num=$(echo ${names} | \
+          awk '{split($1, a, ","); n = 0; for (i in a) n++; print n}')
+    tw=""
+    if [ ${num} -gt 2 ]; then
+        tw="two-names"
+    fi
+    
+    #select the clusters that have at least one difference block
+    filter_clusters ${files} --names=${names} > alleles/allclusters.txt
+
+    if [ "${tech}" == "454" ]; then
+        #remove the clusters if they align strongly to one of the repeat reads
+        cat alleles/allclusters.txt | \
+        grep -A 1 "^>" | grep -v "\-\-" > alleles/reads.fa
+
+        #lastz scores and filters
+        lzseed="W=13 Z=26 --exact=40"
+        lzscore="--match=1,3 --gap=1,3 --ambiguousn Y=10"
+        lzfilter="--format=maf --identity=96..100"
+
+        if [ -e alleles/repeats.fa ]; then
+            lastz alleles/repeats.fa[multi] alleles/reads.fa \
+            ${lzseed} ${lzscore} ${lzfilter} | \
+            remove_clusters alleles/allclusters.txt --minlen=100 > alleles/fake
+            mv alleles/fake alleles/allclusters.txt
+        fi
+        rm alleles/reads.fa
+
+        if [ ! -s alleles/allclusters.txt ]; then
+            echo "None of the clusters are good"
+            exit 2
+        fi
+
+        #cull the components and get the input to assemble
+        cull_components alleles/allclusters.txt > alleles/clusters.txt
+
+        #use newbler to assemble the clusters
+        assemble sff alleles/clusters.txt \
+        --newbler=${sffpath} > alleles/report.txt
+
+        #find the high confidence subset
+        filter alleles/report.txt most-diffs=1 min-side=50 \
+        min-score=20 most-units=2 homopolymer=5,13 ${tw} > alleles/snps.txt
+    elif [ "${tech}" == "illumina" ]; then
+        #remove reads in the clusters, which are candidate repeats
+        fish_clusters alleles/allclusters.txt ${files} > alleles/fake
+         
+        if [ ! -s alleles/fake ]; then
+            echo "None of the clusters are good"
+            exit 2
+        fi
+ 
+        #cull the components and get the input to assemble. There is an option
+		#-short which tries to be smarter and select cliques (which would 
+		#lead to lower false positives), but in most cases I have found it to 
+		#be excessively stringent
+        cull_components alleles/fake > alleles/clusters.txt
+        rm alleles/fake
+
+        #assemble the clusters to form the contigs
+        assemble_illumina reads alleles/clusters.txt \
+        --velvet=${sffpath} > alleles/report.txt
+    
+        #find the high confidence subset
+        filter alleles/report.txt most-diffs=1 min-side=40 \
+        min-score=20 most-units=2 homopolymer=5,13 ${tw} > alleles/snps.txt
+    
+    else
+        print_use_exit
+    fi
+
+    cd ${current}
+elif [ "$1" == "remove" ]; then
+    # this rule is only for 454 for now
+    if [ $# -lt 4 ]; then
+       echo "DIAL remove project_name sff_file/lane_sequence name_individual"
+    fi
+ 
+    # where are the sffinfo, newbler... binaries?
+    sffpath=$(cat $2/status.txt | awk 'NR==2{print $3}')
+
+    current=$(pwd)
+    cd $2
+    
+    # remove the fa qual and clt files for that run and update the status file
+    # for the project
+    name=$(basename $3)
+    prefix=${name%%".sff"}
+  
+    ${sffpath}/sffinfo -s sff/${name} | remove_clones > fake.fa
+ 
+    if [ -f ${prefix}.fa ]; then 
+        update_status -r status.txt fake.fa ${prefix}.fa $4 > fake && \
+        mv fake status.txt
+        rm ${prefix}.fa 
+        rm ${prefix}.qual 
+        rm ${prefix}.clt
+    fi
+    if [ -f reads/${prefix}.fa ]; then
+        update_status -r status.txt fake.fa reads/${prefix}.fa $4 > fake && \
+        mv fake status.txt
+        rm reads/${prefix}.fa
+        rm reads/${prefix}.qual
+        rm clusters/${prefix}.clt
+    fi
+    rm sff/${prefix}.sff fake.fa
+
+    # remove the name of the reads from this run from all the clusters
+    files=$(ls clusters/*.clt)
+
+    for file in ${files}; do 
+        cat ${file} | grep -v "${prefix}" > fake
+        mv fake ${file}        
+        echo "Done with ${file}"
+    done
+
+    cd ${current}
+else
+    print_use_exit
+fi
