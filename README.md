@@ -31,11 +31,11 @@ assays. See the details of the methods here: http://www.biomedcentral.com/1471-2
 The programs can be compiled by following the following recipe (see INSTALL for
 greater detail):
 
-'''
+```
   % configure --prefix=/usr/local (or whatever installation path you prefer)
   % make
   % make install
-'''
+```
 
 This complies all the components of the pipeline and puts the binaries in the
 folder $prefix/bin.  For more in depth instructions, consult the INSTALL file.
