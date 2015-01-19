@@ -1,32 +1,33 @@
-# DIAL
+DIAL
+====
 De novo Identification of Alleles
 
-# REQUIREMENTS
+## REQUIREMENTS
 DIAL should work on any standard 64 bit Linux environment with gcc and python.
 However we have tested the compilation on the following platforms (output of
 gcc --version and uname -a):
 
 - gcc (GCC) 4.1.2 20080704 (Red Hat 4.1.2-46)
-  Linux 2.6.18-164.el5 #1 SMP x86\_64 GNU/Linux
+  Linux 2.6.18-164.el5 ##1 SMP x86\_64 GNU/Linux
 
 - gcc (Debian 4.3.2-1.1) 4.3.2
-  Linux 2.6.18-4-amd64 #1 SMP x86\_64 GNU/Linux
+  Linux 2.6.18-4-amd64 ##1 SMP x86\_64 GNU/Linux
 
 - powerpc-apple-darwin8-gcc-4.0.1 (GCC) 4.0.1 (Apple Computer, Inc. build 5367)
   Darwin 8.11.0 Darwin Kernel Version 8.11.0: root:xnu-792.24.17~1/RELEASE\_PPC Power Macintosh powerpc
 
 
-DIAL uses LASTZ (http://bx.psu.edu/miller\_lab) for aligning the sequences to
+DIAL uses LASTZ (http://bx.psu.edu/miller_lab) for aligning the sequences to
 each other. Please install LASTZ and add the LASTZ binary in your
 executable/binary search path before installing DIAL. 
 
-# SUMMARY
+## SUMMARY
 DIAL (De novo Identification of Alleles) is a collection of programs to automate
 the discovery of alleles for a species where we lack a reference sequence. The
 SNPs/alleles are specifically selected for a low error rate in genotyping 
 assays. See the details of the methods here: http://www.biomedcentral.com/1471-2105/11/130/ 
 
-# INSTALLATION
+## INSTALLATION
 The programs can be compiled by following the following recipe:
 
   % configure --prefix=/usr/local (or whatever installation path you prefer)
@@ -39,7 +40,7 @@ folder $prefix/bin.  For more in depth instructions, consult the INSTALL file.
 Please add the $prefix/bin folder to your executable/binary search path to
 complete the installation.
 
-# DESCRIPTION
+## DESCRIPTION
 The pipeline is run using the 'DIAL' binary. The format of commands issued to
 DIAL is as follows:
 
@@ -107,7 +108,7 @@ project\_names/alleles/snps.txt. The file shows the assembled contigs, with the
 position of the variant alleles. It also shows the number of reads supporting
 the allele and the quality value of the reads at that position.
 
-# TEST-DATASET (An example for 454 reads and another one for Illumina reads)
+## TEST-DATASET (An example for 454 reads and another one for Illumina reads)
 A sample test-dataset is included with this archive to demonstrate the use of
 DIAL. Please read and run the run454\_test.bash and/or runillumina\_test.bash in 
 the folder 'test\_data' to see a sample run of this pipeline.
@@ -115,7 +116,7 @@ the folder 'test\_data' to see a sample run of this pipeline.
 The 454 test should result in 8 SNPs (when Newbler 2.0 is used), whereas the 
 Illumina test case should result in 18 SNPs
 
-# Application Note for Illumina Sequences
+## Application Note for Illumina Sequences
 The number of base-pairs/lane has increased significantly in the past year. DIAL
 was designed to work with significantly fewer sequences/lane as compared to that
 can be generated today. For better results, users should split their Illumina
@@ -123,6 +124,7 @@ datasets into multiple files and then "add" them to the project one after the
 other. For example if they have a fastq sequence file s\_1\_1\_sequence.txt, then
 they should do the following:
 
+"""
     # split the sequences into multiple files with names xaaa,xaab,xaac and so
     # on. Each of those files will have 500,000 fastq sequences.
     split -a 3 -l 2000000 s_1_1_sequence.txt x
@@ -140,9 +142,9 @@ they should do the following:
 
     # finally call the required SNPs
     DIAL update foo
+"""
 
-CHANGE-HISTORY
---------------
+## CHANGE-HISTORY
 Jun 04, 2011:
 * Fixed a bug in calculate\_maxhits which led to an underestimation of maximum
   allowed hits for high coverages.
