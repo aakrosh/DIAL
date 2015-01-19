@@ -28,11 +28,14 @@ SNPs/alleles are specifically selected for a low error rate in genotyping
 assays. See the details of the methods here: http://www.biomedcentral.com/1471-2105/11/130/ 
 
 ## INSTALLATION
-The programs can be compiled by following the following recipe:
+The programs can be compiled by following the following recipe (see INSTALL for
+greater detail):
 
+'''
   % configure --prefix=/usr/local (or whatever installation path you prefer)
   % make
   % make install
+'''
 
 This complies all the components of the pipeline and puts the binaries in the
 folder $prefix/bin.  For more in depth instructions, consult the INSTALL file.
@@ -56,8 +59,9 @@ We now describe each of these actions and the related arguments:
 a) create- This action is used to create and establish a folder structure for a
 new project. The format of the command is as follows: 
 		
+```
 		DIAL create project_name 454/illumina 
-
+```
 where project\_name is the unique identifier and the name of the parent folder
 for the project. The folder is created in the directory where the command is
 issued. Alternatively, one can specify a full path to an alternative
@@ -67,14 +71,14 @@ technology used to generate the reads used in this project. It also creates a
 suitable for the specific project. The default 'status.txt' file looks as
 follows for a 454 dataset:
  
-"""
+```
 Dataset: 454
 454 Binaries: /usr/local/rig/bin
 Expected size of the genome: 3000000000
 Runs added: 0
 Bases added: 0
 Bases used: 0
-"""
+```
 
 The expected size of the genome must be changed to reflect the expected genome
 size in the current project.  The location corresponding to "454 Binaries"
@@ -85,8 +89,10 @@ point to the directory with the velvetg, velveth
 
 b) add- This action is used to add a single run/lane of sequences to the
 		project. The format of the command is as follows:
-		
+
+```		
 		DIAL add project_name sff_file/lane_sequence name_individual [-transcript]
+```
 
 where project\_name is the unique identifier and the name of the parent folder
 for the project. It should exist in the directory that the command is issued in.
@@ -99,9 +105,10 @@ unique identifier/name of the sample this particular lane/run belongs to. The
 dataset.
 
 c) update- This action is used to call SNPs from the runs in the project. The format of the command is as follows:
-		
-		DIAL update project_name
 
+```		
+		DIAL update project_name
+```
 where project\_name is the same identifier/folder name used in the earlier
 commands. The filtered subset of high-confidence calls can be seen in the file
 project\_names/alleles/snps.txt. The file shows the assembled contigs, with the
@@ -124,7 +131,7 @@ datasets into multiple files and then "add" them to the project one after the
 other. For example if they have a fastq sequence file s\_1\_1\_sequence.txt, then
 they should do the following:
 
-"""
+```
     # split the sequences into multiple files with names xaaa,xaab,xaac and so
     # on. Each of those files will have 500,000 fastq sequences.
     split -a 3 -l 2000000 s_1_1_sequence.txt x
@@ -142,7 +149,7 @@ they should do the following:
 
     # finally call the required SNPs
     DIAL update foo
-"""
+```
 
 ## CHANGE-HISTORY
 Jun 04, 2011:
