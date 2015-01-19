@@ -60,7 +60,7 @@ a) create- This action is used to create and establish a folder structure for a
 new project. The format of the command is as follows: 
 		
 ```
-		DIAL create project_name 454/illumina 
+DIAL create project_name 454/illumina 
 ```
 where project\_name is the unique identifier and the name of the parent folder
 for the project. The folder is created in the directory where the command is
@@ -91,7 +91,7 @@ b) add- This action is used to add a single run/lane of sequences to the
 		project. The format of the command is as follows:
 
 ```		
-		DIAL add project_name sff_file/lane_sequence name_individual [-transcript]
+DIAL add project_name sff_file/lane_sequence name_individual [-transcript]
 ```
 
 where project\_name is the unique identifier and the name of the parent folder
@@ -107,7 +107,7 @@ dataset.
 c) update- This action is used to call SNPs from the runs in the project. The format of the command is as follows:
 
 ```		
-		DIAL update project_name
+DIAL update project_name
 ```
 where project\_name is the same identifier/folder name used in the earlier
 commands. The filtered subset of high-confidence calls can be seen in the file
@@ -132,23 +132,23 @@ other. For example if they have a fastq sequence file s\_1\_1\_sequence.txt, the
 they should do the following:
 
 ```
-    # split the sequences into multiple files with names xaaa,xaab,xaac and so
-    # on. Each of those files will have 500,000 fastq sequences.
-    split -a 3 -l 2000000 s_1_1_sequence.txt x
+# split the sequences into multiple files with names xaaa,xaab,xaac and so
+# on. Each of those files will have 500,000 fastq sequences.
+split -a 3 -l 2000000 s_1_1_sequence.txt x
 
-    # now create the project "foo", and then modify the foo/status.txt file
-    DIAL create foo illumina
+# now create the project "foo", and then modify the foo/status.txt file
+DIAL create foo illumina
 
-    # add the files (xaaa,xaab....) one after the other
-    DIAL add foo /home/bar/xaaa individual1
-    DIAL add foo /home/bar/xaab individual1
-    DIAL add foo /home/bar/xaac individual1
-    .
-    .
-    .
+# add the files (xaaa,xaab....) one after the other
+DIAL add foo /home/bar/xaaa individual1
+DIAL add foo /home/bar/xaab individual1
+DIAL add foo /home/bar/xaac individual1
+.
+.
+.
 
-    # finally call the required SNPs
-    DIAL update foo
+# finally call the required SNPs
+DIAL update foo
 ```
 
 ## CHANGE-HISTORY
