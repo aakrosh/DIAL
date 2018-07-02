@@ -49,7 +49,7 @@ node* add_node(graph* const graph,
 			   const uchar* const seq);
 
 /* add the name of the nodes to the graph. Return the number of nodes added */
-int add_nodes(graph* const graph, const char* const seqfile);
+// int add_nodes(graph* const graph, const char* const seqfile);
 
 /* does this edge already exist*/
 bool edge_exists(const node* const n1, const node* const n2);

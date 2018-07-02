@@ -37,33 +37,33 @@ node* add_node(graph* const graph,
 	return node;
 }
 
-/* add the name of the nodes to the graph. Return the number of nodes added */
-int add_nodes(graph* const graph, const char* const seqfile)
-{
-	sequence* sp;
-	int num_nodes = 0;
-	node* node;
-
-	if((sp = read_fasta_sequence(seqfile)) == NULL){
-		fatalf("error in reading the sequences from %s", seqfile);
-	}
-
-	char* ptr;
-	while(sp){
-		ptr = strchr((char*)sp->header, ' ');
-		if(ptr != NULL){
-			*ptr = 0;
-		}
-		node = add_node(graph, (char*)sp->header, sp->sequence);
-		num_nodes++;
-
-		if(!get_next_sequence(sp)){
-			break;
-		}
-	}
-	close_fasta_sequence(sp);
-	return num_nodes;
-}
+///* add the name of the nodes to the graph. Return the number of nodes added */
+//int add_nodes(graph* const graph, const char* const seqfile)
+//{
+//	sequence* sp;
+//	int num_nodes = 0;
+//	node* node;
+//
+//	if((sp = read_fasta_sequence(seqfile)) == NULL){
+//		fatalf("error in reading the sequences from %s", seqfile);
+//	}
+//
+//	char* ptr;
+//	while(sp){
+//		ptr = strchr((char*)sp->header, ' ');
+//		if(ptr != NULL){
+//			*ptr = 0;
+//		}
+//		node = add_node(graph, (char*)sp->header, sp->sequence);
+//		num_nodes++;
+//
+//		if(!get_next_sequence(sp)){
+//			break;
+//		}
+//	}
+//	close_fasta_sequence(sp);
+//	return num_nodes;
+//}
 
 /* does this edge already exist*/
 bool edge_exists(const node* const n1, const node* const n2)

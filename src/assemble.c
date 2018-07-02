@@ -616,7 +616,7 @@ static void print_contig_alleles(char** const pfptr,
 	ssize_t num_read;
 
 	bin* hel;
-	information info;
+	//information info;
 	position position;
 	allele* allele;
 	
@@ -778,7 +778,7 @@ static void print_contig_alleles(char** const pfptr,
 			read->information->end = end;
 			index = begin + read->information->offset;
 			for(i = begin; i <= end && index < contig->num_bases; i++){
-				info = contig->info[index];
+				//info = contig->info[index];
 				position = read->information->sequence[i];
 				allele = new_allele(position.seq, position.qual, read);
 				sladdhead(&contig->info[index].alleles, allele);

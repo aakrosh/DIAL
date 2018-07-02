@@ -313,13 +313,15 @@ fprintf(stderr, " A:%d C:%d G:%d T:%d\n", many[0], many[1], many[2], many[3]);
 		if (contig)
 			printf("%s", x[1]);
 		for (p = 0, i = 2; i < kk; ++i) {
-			for (j = 0; (c = x[i][j]) != '\n'; ++j, ++p)
+			for (j = 0; (c = x[i][j]) != '\n'; ++j, ++p) {
 				if (p == pos) {
 					printf("[%c]", c);
 					pos = atoi(x[++k]);
-				} else
+				} else {
 					putchar(c);
+                }
 				putchar('\n');
+            }
 		}
 		for (k = kk; k <= nline; ++k) {
 			if ((s = strchr(x[k], '\n')) != NULL)

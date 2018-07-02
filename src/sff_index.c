@@ -427,8 +427,8 @@ static u32 hassock_hash
 
 	switch (len)
 		{
-		case 3: h ^= *(--data) << 16;
-		case 2: h ^= *(--data) << 8;
+		case 3: h ^= *(--data) << 16; break;
+		case 2: h ^= *(--data) << 8; break;
 		case 1: h ^= *(--data);
 		        h *= m;
 		};

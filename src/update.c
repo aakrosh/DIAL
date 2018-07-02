@@ -157,7 +157,10 @@ static void update(const char* const seqfile, const char* const qualfile)
 		
 		/* get the corresponding quality values from the qualfile */
 		values = get_quality_values((char*)sp->header, &fptr, &n, fp, &quals);
-		assert(values == sp->slen);
+        if (values != sp->slen) {
+           fprintf(stderr, "Number of quality values do not match number of nucs");
+            exit(EXIT_FAILURE);
+        }
 
         /* process this read */
 	    if(process_read(sp, quals, sf, qf, rf) == TRUE){
