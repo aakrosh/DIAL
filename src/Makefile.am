@@ -22,7 +22,7 @@ endif
 AM_CFLAGS = -W -Wformat -Wimplicit -Wreturn-type -Wall -Werror \
             -Wunused-variable -Wunused-parameter -Wreturn-type -Wswitch \
             -Winline -Wnested-externs -Wextra $(OPTIMIZATIONS) \
-            -std=c99
+            -std=c99 -Wno-unused-result
 
 ################################################################################
 
