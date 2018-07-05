@@ -41,7 +41,7 @@
  * is only handy when I want to speed up a lot of stuff and hence, I only 
  * update this version once in a while
  **/
-
+#define _GNU_SOURCE
 //#include <sys/dir.h>
 #include <dirent.h>
 #include <sys/types.h>

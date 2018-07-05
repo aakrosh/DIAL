@@ -70,7 +70,9 @@ void append(uchar** parray, 	/*the pointer to the array to be used*/
 			const int ch);		/*the byte to be added*/
 
 /*drop in replacement for the getline function*/
+#ifndef _GNU_SOURCE
 signed long getline(char** lineptr, size_t* max, FILE* stream);
+#endif
 
 /*run the passed command in the shell*/
 void run_command(const char* const command);

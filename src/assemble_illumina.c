@@ -3,7 +3,7 @@
  *  clusters.txt : the file which has all the clusters and the components
  *  listed
  *The output is a simple file which has the fastq sequences for the reads*/
-
+#define _GNU_SOURCE
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>

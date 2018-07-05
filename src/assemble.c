@@ -38,7 +38,7 @@
  * which is the list of contigs and alleles in the exon. It also list 
  * the singletons and the alignments if the proper options are specified.
  **/
-
+#define _GNU_SOURCE
 //#include <sys/dir.h>
 #include <dirent.h>
 #include <sys/types.h>
